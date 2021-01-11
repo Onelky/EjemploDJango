@@ -3,8 +3,12 @@ from django.views.decorators.csrf import csrf_exempt # Esto es para acceder al A
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 
-from EmployeeApp.models import Department, Employee, Student
-from EmployeeApp.serializersApp import EmployeeSerializer, DeparmentSerializer, StudentSerializer
+from .models import Department, Employee, Student, Cliente
+
+from types import SimpleNamespace as Namespace 
+import pyodbc
+import json
+
 
 # Create your views here.
 @csrf_exempt
@@ -23,42 +27,53 @@ def departmentApi(request, id=0):
 
         return JsonResponse("hola!!", safe = False)
 
-@csrf_exempt
-def EmployeeApi(request, id=0):
-    if request.method == 'GET':
-        employees = Employee.objects.all()
-        employee_serializer = EmployeeSerializer(employees, many=True)
-        return JsonResponse(employee_serializer.data, safe=False)
-        
-
-    elif request.method == 'POST':
-        employee_data = JSONParser().parse(request)
-        employee_serializer = EmployeeSerializer(data= employee_data)
-        if employee_serializer.is_valid():
-            employee_serializer.save()
-            return JsonResponse(employee_serializer.data, safe= False)
-
-        return JsonResponse("no!!", safe = False )
-
 
 @csrf_exempt
-def StudentApi(request, id=0):
-    if request.method == 'GET':
-        students = Student.objects.all()
-        student_serializer = StudentSerializer(students, many=True)
-        return JsonResponse(student_serializer.data, safe=False)
+class Cliente:
 
-    elif request.method == 'POST':
-        student_saved = False
-        student_data = JSONParser().parse(request)
-        student_serializer = DeparmentSerializer(data= student_data)
-        
-        if student_serializer.is_valid():
-            student_serializer.save()
-            student_saved = True
-        
-        if student_saved:
-            return JsonResponse(student_serializer.data, safe= True)
-        
-        else:
-            return JsonResponse("Failure", safe = False )
+    def getClientes(request):
+        if request.method ==  'GET':
+                
+            conn = pyodbc.connect('Driver={sql server};'
+                                    'Server=ONELKY\SQLEXPRESS;' # Se sustituye con otros datos
+                                    'Database=Administracion;'
+                                    'Trusted_Connection=yes;')
+            
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM Cliente FOR JSON AUTO")
+            rows = cursor.fetchall()
+
+            response = json.loads(''.join([row[0] for row in rows]))
+
+        return JsonResponse(response, safe=False)
+
+    @csrf_exempt
+    def registrarCliente(request):
+
+        response = ""
+        if not request.body:
+            response = {"message": "empty"}
+            return JsonResponse(response, safe = True)
+
+        else:     
+            try:
+
+                data =  json.loads(request.body, object_hook = lambda d : Namespace(**d))
+
+                connection = pyodbc.connect('Driver={sql server};'
+                                        'Server=ONELKY\SQLEXPRESS;'
+                                        'Database=Administracion;'
+                                        'Trusted_Connection=yes;')
+                
+                cursor = connection.cursor()
+                query = "INSERT INTO Cliente (Nom_cli, Ape_cli) VALUES (?,?)" # Esta tabla se tiene que cambiar
+                cursor.execute(query, [data.nombre, data.apellido])
+
+                connection.commit()
+                response = {"estado": "exito"}
+                return JsonResponse(response, safe = True)
+            
+            except:
+                response = {"estado": "fail"}
+                return JsonResponse(response, safe = True)
+
