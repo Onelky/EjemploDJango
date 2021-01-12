@@ -73,17 +73,53 @@ class Calificacion(BaseModel):
     id_trimestre: int #FK
 
 
-class Estudiante(BaseModel):
+class EstudianteReturn(BaseModel):
     id_estudiante: int = None
-    id_persona: int #FK
-    id_carrera: int #FK  
+    Nombre: str 
+    Apellido: str 
+    Carrera: str #FK  
+    estado: str # hay que buscarlo en la BD 
+    Fecha_nacimiento: str
+    Cedula: str
+    CorreoPersonal: str 
+    CorreoInstitucional: str = None  
+    Telefono: str
+    Clave: str = None 
     calificaciones: List[Calificacion] = []  
+
+class EstudianteCreate(BaseModel):
+    id_estudiante: int = None
+    id_estado: int
+    Nombre: str 
+    Apellido: str  
+    Fecha_nacimiento: str = None
+    Cedula: str
+    CorreoPersonal: str 
+    CorreoInstitucional: str = None  
+    Telefono: str
     
+    id_carrera: int = None #FK
+    id_persona: int = None
+  
+    calificaciones: List[Calificacion] = []  
+
 class Maestro(BaseModel):
     id_maestro: int
     id_contrato: str #FK
     id_persona: int #FK
+
     Salario: float
+    estado: str # hay que buscarlo en la BD 
+    Nombre: str 
+    Apellido: str 
+    Fecha_nacimiento: str
+    Cedula: str
+    CorreoPersonal: str 
+    CorreoInstitucional: str = None  
+    Telefono: str
+    Clave: str = None 
+
+
 
 
     
