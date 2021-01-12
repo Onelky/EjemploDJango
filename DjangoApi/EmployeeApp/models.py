@@ -6,6 +6,8 @@ from marshmallow_dataclass import dataclass
 from typing import List
 #from DjangoApi.EmployeeApp.models import Employees, Department
 
+from pydantic import BaseModel
+
 
 
 # Create your models here.
@@ -16,54 +18,72 @@ from typing import List
 class Department(models.Model):
     DepartmentId = models.AutoField(primary_key = True)
     DepartmentName = models.CharField(max_length=20)
-class Employee(models.Model):
-    Id = models.AutoField(primary_key = True)
-    Name = models.CharField(max_length=20)
-    Department = models.IntegerField()
-    Date_joining = models.DateField()
-    PhotoFileName = models.CharField(max_length=100)
 
-class Student (models.Model):
-    Id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length=20)
-    phone = models.CharField(max_length=10)
-    address = models.CharField(max_length=20)
-    createdDate = models.DateField(default= datetime.now())
-    grade =  models.CharField(max_length=2)
-    #lastUpdatedDate =  models.DateField()
-    gender =  models.CharField(max_length=2)
 
-class Student1 (models.Model):
+class Cliente1(BaseModel):
 
-    Id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length=20)
-    phone = models.CharField(max_length=10)
-    address = models.CharField(max_length=20)
-    createdDate = models.DateField(default= datetime.now())
-    grade =  models.CharField(max_length=2)
-    #lastUpdatedDate =  models.DateField()
-    gender =  models.CharField(max_length=2)
-
-@dataclass
-class Cliente:
-
-    def __init__(self, nombre, apellido, *args, **kwargs):
-        self.nombre = nombre
-        self.apellido = apellido
-    
-    @classmethod
-    def from_json(data):
-        json_dict = json.loads(data)
-        return Cliente(**json_dict)
+    nombre: str
+    apellido: str   
+    id: int = None  
 
     #id_clientes = models.AutoField(primary_key = True)
     #Nom_cli = models.CharField(max_length=50)
     #Ape_cli = models.CharField(max_length=50)
 
-class User(object):
-    def __init__(self, name, username, *args, **kwargs):
-        self.name = name
-        self.username = username
+class Persona:
+    id_persona: int = None  
+    estado: str # hay que buscarlo en la BD 
+    Nombre: str 
+    Apellido: str 
+    Fecha_nacimiento: str
+    Cedula: str
+    CorreoPersonal: str 
+    CorreoInstitucional: str = None  
+    Telefono: str
+    Clave: str = None 
+
+class Area(BaseModel):
+    id_area: int = None
+    NombreArea: str
+
+class Materia(BaseModel):
+    id_materia: int = None 
+    id_area: int  #FK
+    NombreMateria: str
+    Codigo: str
+
+class Trimestre(BaseModel):
+    id_trimestre: int = None
+    fecha_inicio: datetime
+    fecha_final: datetime
+    
+class Carrera(BaseModel):
+    id_carrera: int = None
+    id_area: int #KF
+    id_coordinador: int #FK
+    Nombre: str
+    Duracion: int 
+
+
+class Calificacion(BaseModel):
+    id_calif: int = None
+    id_materia: int #FK
+    id_estudiante: int #FK
+    Calificacion: datetime
+    id_trimestre: int #FK
+
+
+class Estudiante(BaseModel):
+    id_estudiante: int = None
+    id_persona: int #FK
+    id_carrera: int #FK  
+    calificaciones: List[Calificacion] = []  
+    
+class Maestro(BaseModel):
+    id_maestro: int
+    id_contrato: str #FK
+    id_persona: int #FK
+    Salario: float
 
 
     

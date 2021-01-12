@@ -3,11 +3,13 @@ from django.views.decorators.csrf import csrf_exempt # Esto es para acceder al A
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 
-from .models import Department, Employee, Student, Cliente
+from .models import  Cliente1
 
 from types import SimpleNamespace as Namespace 
 import pyodbc
 import json
+
+from .conexion import Conexion
 
 
 # Create your views here.
@@ -51,6 +53,37 @@ class Cliente:
     def registrarCliente(request):
 
         response = ""
+        
+        if not request.body:
+            response = {"message": "fail"}
+            return JsonResponse(response, safe = True)
+
+        else:     
+            try:
+                data =  json.loads(request.body)
+                cliente = Cliente1(**data)
+
+                            
+                connection = Conexion.get_string_conection()
+
+                print('\n\n\n CLIENTEEE  ', cliente)
+
+                
+                cursor = connection.cursor()
+                query = "INSERT INTO Cliente (Nom_cli, Ape_cli) VALUES (?,?)" # Esta tabla se tiene que cambiar
+                cursor.execute(query, [cliente.nombre, cliente.apellido])
+
+                connection.commit()
+                response = {"estado": "exito"}
+                connection.close()
+                return JsonResponse(response, safe = True)
+            
+            except:
+                response = {"estado": "fail"}
+                return JsonResponse(cliente, safe = True)
+
+        """"
+        response = ""
         if not request.body:
             response = {"message": "empty"}
             return JsonResponse(response, safe = True)
@@ -76,4 +109,30 @@ class Cliente:
             except:
                 response = {"estado": "fail"}
                 return JsonResponse(response, safe = True)
+"""
+
+class EstudianteApi:
+    @csrf_exempt
+    def getListaEstudiantes(request):
+
+        response = ""
+        estado_conexion = False 
+        conn = Conexion.get_string_conection()
+                
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Persona FOR JSON AUTO")
+        rows = cursor.fetchall()
+        print('\n\n\nRE S PONSEEE   ', rows)
+
+        if len(rows)>0:
+            response = json.loads(''.join([row[0] for row in rows]))
+
+
+        else:
+            response = {"message": "No hay datos almacenados"} 
+
+        return JsonResponse(response, safe=False)
+
+        
+    
 
