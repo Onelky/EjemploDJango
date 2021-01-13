@@ -1,15 +1,9 @@
 from django.conf.urls import url
 #from views import departmentApi
-from .views import  Cliente, EstudianteApi
-# Este archivo se crea para ligar un determinado metodo con una url
+from .views import EstudianteApi
+from .viewCarrera import CarreraApi
 
-# Luego se debe asociar este archivo al archivo urls principal
 urlpatterns = [
-
-    url(r'^cliente/$', Cliente.getClientes),
-    url(r'^cliente/([0-9]+)$', Cliente.getClientes),
-    url(r'^registrarcliente/$', Cliente.registrarCliente),
-    url(r'^registrarcliente/([0-9]+)$', Cliente.registrarCliente),
 
     # ESTUDIANTE
 
@@ -23,5 +17,12 @@ urlpatterns = [
     url(r'^editarestudiante/([0-9]+)$', EstudianteApi.editarEstudiante), 
 
     url(r'^borrarestudiante/$', EstudianteApi.borrarEstudiante),
-    url(r'^borrarestudiante/([0-9]+)$', EstudianteApi.borrarEstudiante),
+    url(r'^borrarestudiante/([0-9]+)$', EstudianteApi.borrarEstudiante), 
+
+    # CARRERA
+
+    url(r'^carreras/$', CarreraApi.getListaCarreras),
+    url(r'^carreras/([0-9]+)$', CarreraApi.getListaCarreras),
+
+
 ]

@@ -12,105 +12,6 @@ import json
 from .conexion import Conexion
 
 
-# Create your views here.
-@csrf_exempt
-def departmentApi(request, id=0):
-    if request.method == 'GET':
-        departments = Department.objects.all()
-        departments_serializer = DeparmentSerializer(departments, many=True)
-        return JsonResponse(departments_serializer.data, safe=False)
-
-    elif request.method == 'POST':
-        department_data = JSONParser().parse(request)
-        department_serializer = DeparmentSerializer(data= department_data)
-        if department_serializer.is_valid():
-            department_serializer.save()
-            return JsonResponse("hah", safe= False)
-
-        return JsonResponse("hola!!", safe = False)
-
-
-@csrf_exempt
-class Cliente:
-
-    def getClientes(request):
-        if request.method ==  'GET':
-                
-            conn = pyodbc.connect('Driver={sql server};'
-                                    'Server=ONELKY\SQLEXPRESS;' # Se sustituye con otros datos
-                                    'Database=Administracion;'
-                                    'Trusted_Connection=yes;')
-            
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM Cliente FOR JSON AUTO")
-            rows = cursor.fetchall()
-
-            response = json.loads(''.join([row[0] for row in rows]))
-
-        return JsonResponse(response, safe=False)
-
-    @csrf_exempt
-    def registrarCliente(request):
-
-        response = ""
-        
-        if not request.body:
-            response = {"message": "fail"}
-            return JsonResponse(response, safe = True)
-
-        else:     
-            try:
-                data =  json.loads(request.body)
-                cliente = Cliente1(**data)
-
-                            
-                connection = Conexion.get_string_conection()
-
-                print('\n\n\n CLIENTEEE  ', cliente)
-
-                
-                cursor = connection.cursor()
-                query = "INSERT INTO Cliente (Nom_cli, Ape_cli) VALUES (?,?)" # Esta tabla se tiene que cambiar
-                cursor.execute(query, [cliente.nombre, cliente.apellido])
-
-                connection.commit()
-                response = {"estado": "exito"}
-                connection.close()
-                return JsonResponse(response, safe = True)
-            
-            except:
-                response = {"estado": "fail"}
-                return JsonResponse(cliente, safe = True)
-
-        """"
-        response = ""
-        if not request.body:
-            response = {"message": "empty"}
-            return JsonResponse(response, safe = True)
-
-        else:     
-            try:
-
-                data =  json.loads(request.body, object_hook = lambda d : Namespace(**d))
-
-                connection = pyodbc.connect('Driver={sql server};'
-                                        'Server=ONELKY\SQLEXPRESS;'
-                                        'Database=Administracion;'
-                                        'Trusted_Connection=yes;')
-                
-                cursor = connection.cursor()
-                query = "INSERT INTO Cliente (Nom_cli, Ape_cli) VALUES (?,?)" # Esta tabla se tiene que cambiar
-                cursor.execute(query, [data.nombre, data.apellido])
-
-                connection.commit()
-                response = {"estado": "exito"}
-                return JsonResponse(response, safe = True)
-            
-            except:
-                response = {"estado": "fail"}
-                return JsonResponse(response, safe = True)
-"""
-
 class EstudianteApi:
     @csrf_exempt
     def getListaEstudiantes(request):
@@ -120,13 +21,13 @@ class EstudianteApi:
         conn = Conexion.get_string_conection()
                 
         cursor = conn.cursor() 
-        cursor.execute("SELECT id_estudiante, p.Nombre, Apellido, car.Nombre, estado, Fecha_nacimiento,\
+        cursor.execute("SELECT id_estudiante, Persona.id_persona, Persona.Nombre, Apellido, est.id_carrera, Persona.id_estado, Fecha_nacimiento,\
                         Cedula, CorreoPersonal, CorreoInstitucional, Telefono \
                         FROM Estudiante est\
-                            INNER JOIN Persona p\
-                                ON est.id_persona = p.id_persona\
+                            INNER JOIN Persona \
+                                ON est.id_persona = Persona.id_persona\
                             INNER JOIN Tipo_Estado estado\
-                                ON p.id_estado = estado.id_estado\
+                                ON Persona.id_estado = estado.id_estado\
                             INNER JOIN Carrera car\
                                 ON est.id_carrera = car.id_carrera \
                             FOR JSON AUTO")
@@ -155,22 +56,21 @@ class EstudianteApi:
             try:
                 data =  json.loads(request.body)
                 estudiante = EstudianteCreate(**data)
-                print(estudiante)
 
                 connection = Conexion.get_string_conection()
 
                 print('\n\n\n  DATAA ', estudiante)
                
                 cursor = connection.cursor()
-                query = "INSERT INTO Persona(\
-                        id_estado,\
-                        Nombre,\
-                        Apellido,\
-                        Cedula,\
-                        CorreoPersonal,\
-                        Telefono,\
-                        Fecha_nacimiento\
-                        ) VALUES (?,?,?,?,?,?,?)" 
+                query = """INSERT INTO Persona(
+                        id_estado,
+                        Nombre,
+                        Apellido,
+                        Cedula,
+                        CorreoPersonal,
+                        Telefono,
+                        Fecha_nacimiento
+                        ) VALUES (?,?,?,?,?,?,?)"""
 
                 # Primero se crea la persona
                             
@@ -180,11 +80,11 @@ class EstudianteApi:
                 
                 # Se crea el estudiante 
 
-                query = f"INSERT INTO Estudiante(id_carrera, id_persona)\
-                SELECT {estudiante.id_carrera}, MAX(id_persona)\
-                FROM Persona"
+                query = """INSERT INTO Estudiante(id_carrera, id_persona)
+                SELECT ?, MAX(id_persona)
+                FROM Persona"""
 
-                cursor.execute(query)
+                cursor.execute(query, estudiante.id_carrera)
                 connection.commit()
 
 
@@ -242,7 +142,6 @@ class EstudianteApi:
             try:
                 data =  json.loads(request.body)
                 estudiante = EstudianteCreate(**data)
-                print(estudiante, '\n\n\n')
 
                 connection = Conexion.get_string_conection()
 
@@ -287,61 +186,33 @@ class EstudianteApi:
     @csrf_exempt
     def borrarEstudiante(request):
         response = ""
-        conn = Conexion.get_string_conection()
-        idP = json.loads(request.body)
-        id_persona = idP["id"]
-        cursor = conn.cursor() 
+        try: 
+            
+ 
+            conn = Conexion.get_string_conection()
+            idP = json.loads(request.body)
+            id_persona = idP["id"]
+            cursor = conn.cursor() 
 
-        cursor.execute("""DELETE FROM Estudiante
-                        WHERE id_persona = ?""", id_persona)
+            cursor.execute("""DELETE FROM Estudiante
+                            WHERE id_persona = ?""", id_persona)
+            
+            conn.commit()
+
+            cursor.execute("""DELETE FROM Persona
+                            WHERE id_persona = ?""", id_persona)
+            
+            conn.commit()
+            response = {"estado": "Exito"}
+
+        except: 
+            response = {"estado": "fail"}
         
-        conn.commit()
 
+        return JsonResponse(response, safe=True)
+        
+
+#class MaestroApi:
+    #@csrf_exempt
+    #def getListaMaestros(request):
        
-        cursor.execute("""DELETE FROM Persona
-                        WHERE id_persona = ?""", id_persona)
-        
-        conn.commit()
-
-
-        return JsonResponse(response, safe=False)
-        
-
-
-
-
-
-class MaestroApi:
-    @csrf_exempt
-    def getListaMaestros(request):
-        response = ""
-        estado_conexion = False 
-        conn = Conexion.get_string_conection()
-                
-        cursor = conn.cursor() 
-        cursor.execute("SELECT id_estudiante, p.Nombre, Apellido, car.Nombre, estado, Fecha_nacimiento,\
-                        Cedula, CorreoPersonal, CorreoInstitucional, Telefono \
-                        FROM Estudiante est\
-                            INNER JOIN Persona p\
-                                ON est.id_persona = p.id_persona\
-                            INNER JOIN Tipo_Estado estado\
-                                ON p.id_estado = estado.id_estado\
-                            INNER JOIN Carrera car\
-                                ON est.id_carrera = car.id_carrera \
-                            FOR JSON AUTO")
-       
-        rows = cursor.fetchall()
-        #print('\n\n\nRE S PONSEEE   ', rows)
-
-        if len(rows)>0:
-            response = json.loads(''.join([row[0] for row in rows]))
-
-
-        else:
-            response = {"message": "No hay datos almacenados"} 
-
-        return JsonResponse(response, safe=False)
-
-        
-    
-

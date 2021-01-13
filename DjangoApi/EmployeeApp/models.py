@@ -77,8 +77,8 @@ class EstudianteReturn(BaseModel):
     id_estudiante: int = None
     Nombre: str 
     Apellido: str 
-    Carrera: str #FK  
-    estado: str # hay que buscarlo en la BD 
+    Carrera: str   
+    estado: str 
     Fecha_nacimiento: str
     Cedula: str
     CorreoPersonal: str 
@@ -96,11 +96,10 @@ class EstudianteCreate(BaseModel):
     Cedula: str
     CorreoPersonal: str 
     CorreoInstitucional: str = None  
-    Telefono: str
-    
+    Telefono: str   
     id_carrera: int = None #FK
     id_persona: int = None
-  
+      
     calificaciones: List[Calificacion] = []  
 
 class Maestro(BaseModel):
